@@ -94,16 +94,16 @@ class poker{
         for($i = 0;$i < $suffle;$i++){
             $num1 = mt_rand(0,$max-1);
             $num2 = mt_rand(0,$max-1);
-            $tmp = $this->deck[$num1];
+            $temp = $this->deck[$num1];
             $this->deck[$num1] = $this->deck[$num2];
-            $this->deck[$num2] = $tmp;
+            $this->deck[$num2] = $temp;
         }
     }
 
-    //カードに強さを付ける。$ifが1だと数字>マークで2だとマーク>数字になる
-    protected function comparecard($mk,$num,$if){
+    //カードに強さを付ける。$patternが1だと数字>マークで2だとマーク>数字になる
+    protected function comparecard($mk,$num,$pattern){
         $sum = 0;
-        if($if == 1){
+        if($pattern == 1){
             switch($mk){
                 case "spade":
                 $sum += $num*count($this->marks)-3;
@@ -120,7 +120,7 @@ class poker{
                 default:
             }
             $sum = self::MAX_CARD + 1 - $sum;
-        }elseif($if == 2){
+        }elseif($pattern == 2){
             switch($mk){
                 case "spade":
                 $sum += $this->max_card*3;
@@ -141,292 +141,225 @@ class poker{
         return $sum;
     }
 
-    //カードをソートする$ifを1にすると数字>マークで2にするとマーク>数字でソートする
-    protected function sortcard($if){
+    //カードをソートする$patternを1にすると数字>マークで2にするとマーク>数字でソートする
+    protected function sortcard($pattern){
         foreach($this->hands as $playc => $hand){
             for($i = 0;$i < $this->phand;$i++){
                 for($j = $i+1;$j < $this->phand;$j++){
-                    $card1 = $this->comparecard($this->hands[$playc][$i]["mark"],$this->hands[$playc][$i]["number"],$if);
-                    $card2 = $this->comparecard($this->hands[$playc][$j]["mark"],$this->hands[$playc][$j]["number"],$if);
+                    $card1 = $this->comparecard($this->hands[$playc][$i]["mark"],$this->hands[$playc][$i]["number"],$pattern);
+                    $card2 = $this->comparecard($this->hands[$playc][$j]["mark"],$this->hands[$playc][$j]["number"],$pattern);
                     if($card1 < $card2){
-                        $tmp = $this->hands[$playc][$i]["mark"];
+                        $temp = $this->hands[$playc][$i]["mark"];
                         $this->hands[$playc][$i]["mark"] = $this->hands[$playc][$j]["mark"];
-                        $this->hands[$playc][$j]["mark"] = $tmp;
-                        $tmp = $this->hands[$playc][$i]["number"];
+                        $this->hands[$playc][$j]["mark"] = $temp;
+                        $temp = $this->hands[$playc][$i]["number"];
                         $this->hands[$playc][$i]["number"] = $this->hands[$playc][$j]["number"];
-                        $this->hands[$playc][$j]["number"] = $tmp;
+                        $this->hands[$playc][$j]["number"] = $temp;
                     }
                 }
             }
         }
     }
-
-    //カードを画面に表示する
-    public function displaycard(){
-        echo "<form action='./include/pokerchange.php' method='post'>";
-        foreach($this->hands as $playc => $hand){
-            echo "<h2 class='pokertext'>".$playc;
-            if($this->change > 0){
-                echo " ".$this->changecards[$playc]."枚交換した。";
-            }
-            echo "</h2>";
-            echo "<div class='cards'>";
-            foreach($hand as $number => $card){
-                echo "<div class='card'>";
-                if($playc == "Player"){
-                    echo "<input id='".$number."' class='inputcard' type='checkbox' name='change[]' value='".$number."'>";
-                    echo "<label for='".$number."'><img src='./image/".$card["number"]."of".$card["mark"].".png' alt='".$card["mark"]."の".$card["number"]."' height='".self::CARD_HEIGHT."' width='".self::CARD_WIDTH."'></label>";
-                    //echo "<label class='label' for='".$number."'>".$card["mark"]."の".$card["number"]."</label>";
-                }else{
-                    echo "<img src='./image/backcard.png' alt='CARD' height='".self::CARD_HEIGHT."' width='".self::CARD_WIDTH."'><br>";
-                    //echo $card["mark"]."の".$card["number"];
-                }
-                echo "</div>";
-            }
-            echo "</div>";
-            if($playc == "Player"){
-                echo "<div class='submit'><input type='submit' value='交換する'></div>";
-            }else{
-                $this->comchange($hand,$playc);
-            }
-            echo "<input type='hidden' name='flag' value='1'>";
-        }
-        echo "</form>";
-    }
-
-    //結果を計算し画面に表示する
-    public function result($playnum){
-        $result = array();
-        $judge = array();
-        $win = 0;
-        echo "<h1 class='pokertext'>結果</h1>";
-        $i = 0;
-        foreach($this->hands as $playc => $hand){
-            echo "<h2 class='pokertext'>".$playc."</h2>";
-            $result[$i] = array();
-            $result[$i] = $this->pokerrole($this->hands[$playc]);
-            echo "<h2 class='pokertext'>".$result[$i][0]."</h2>";
-            $judge[$i] = array();
-            echo "<div class='cards'>";
-            foreach($hand as $number => $card){
-                echo "<div class='card'>";
-                echo "<img src='./image/".$card["number"]."of".$card["mark"].".png' alt='".$card["mark"]."の".$card["number"]."' height='".self::CARD_HEIGHT."' width='".self::CARD_WIDTH."'><br>";
-                //echo $card["mark"]."の".$card["number"];
-                echo "</div>";
-            }
-            echo "</div>";
-            $i++;
-        }
-        $judge = $this->strengthrole($result,$playnum);
-        for($i = 0;$i < $playnum;$i++){
-            if($judge[$i][1] == 1){
-                $win = $i;
-            }
-        }
-        echo "<div class='result'><h2 class='pokertext'>勝者は".$this->playchar[$win]."！</h2></div>";
-        $_SESSION = array();
-    echo "<h3 class='submit'><a class='submit' href='poker.php'>戻る</a></h3>";
-    }
-
+    
     //ロイヤルストレートフラッシュ-ストレートフラッシュ-フォーカード-フルハウス-フラッシュ-ストレート-スリーカード-ツーペア-ワンペア-ノーペア
     //上記の役のいずれがそろっているかを調べる
     //戻り値は配列で役・判定に必要な数字・判定に必要なマークの3要素
-    private function pokerrole($hand){
+    public function pokerrole($hand){
         //同じ数字があるかどうか調べる
-        $numrolen = $this->numscrutiny($hand,1);
+        $handRolen = $this->numscrutiny($hand,1);
         //同じ数字があり、かつ複数ある場合
-        if($numrolen[0] > 1 && $numrolen[1] > 0){
+        if($handRolen[0] > 1 && $handRolen[1] > 0){
             //同じ数字の数が3つある場合
-            if($numrolen[0] == 3){
-                $result = array("フルハウス！",$numrolen[2],$numrolen[3]);
-                return $result;
+            if($handRolen[0] == 3){
+                $resultInfo = array("フルハウス！",$handRolen[2],$handRolen[3]);
+                return $resultInfo;
             }else{
-                $result = array("ツーペア！",$numrolen[2],$numrolen[3]);
-                return $result;
+                $resultInfo = array("ツーペア！",$handRolen[2],$handRolen[3]);
+                return $resultInfo;
             }
         //同じ数字が4枚ある場合
-        }elseif($numrolen[0] == 4){
-            $result = array("フォーカード！",$numrolen[2],$numrolen[3]);
-            return $result;
+        }elseif($handRolen[0] == 4){
+            $resultInfo = array("フォーカード！",$handRolen[2],$handRolen[3]);
+            return $resultInfo;
         //同じ数字が3枚ある場合
-        }elseif($numrolen[0] == 3){
-            $result = array("スリーカード！",$numrolen[2],$numrolen[3]);
-            return $result;
+        }elseif($handRolen[0] == 3){
+            $resultInfo = array("スリーカード！",$handRolen[2],$handRolen[3]);
+            return $resultInfo;
         //同じ数字が2枚ある場合
-        }elseif($numrolen[0] == 2){
-            $result = array("ワンペア！",$numrolen[2],$numrolen[3]);
-            return $result;
+        }elseif($handRolen[0] == 2){
+            $resultInfo = array("ワンペア！",$handRolen[2],$handRolen[3]);
+            return $resultInfo;
         }else{
             //ストレートになってるか調べる
-            $numrole = $this->numscrutiny($hand,2);
+            $handRole = $this->numscrutiny($hand,2);
             //ストレートになっている場合
-            if($numrole[0] == 4){
+            if($handRole[0] == 4){
                 //フラッシュになってるか調べる
-                $numrole = $this->numscrutiny($hand,3);
+                $handRole = $this->numscrutiny($hand,3);
                 //フラッシュだった場合
-                if($numrole[0] == 5){
+                if($handRole[0] == 5){
                     $min = 0;
-                    $tmp = 0;
+                    $cardNumber = 0;
                     for($i = 0;$i < $this->phand;$i++){
                         if($hand[$i]["number"] == 1){
-                            $tmp = 14;
+                            $cardNumber = 14;
                         }else{
-                            $tmp = $hand[$i]["number"];
+                            $cardNumber = $hand[$i]["number"];
                         }
-                        if($tmp < $min){
+                        if($cardNumber < $min){
                             $min = $hand[$i]["number"];
                         }
                     }
                     //10・11・12・13・Aの並びだった場合
-                    if($tmp == 10){
-                        $result = array("ロイヤルストレートフラッシュ！！",$numrole[1],$numrole[2]);
-                        return $result;
+                    if($cardNumber == 10){
+                        $resultInfo = array("ロイヤルストレートフラッシュ！！",$handRole[1],$handRole[2]);
+                        return $resultInfo;
                     }else{
-                        $result = array("ストレートフラッシュ！",$numrole[1],$numrole[2]);
-                        return $result;
+                        $resultInfo = array("ストレートフラッシュ！",$handRole[1],$handRole[2]);
+                        return $resultInfo;
                     }
                 }else{
-                    $result = array("ストレート！",$numrole[1],$numrole[2]);
-                    return $result;
+                    $resultInfo = array("ストレート！",$handRole[1],$handRole[2]);
+                    return $resultInfo;
                 }
             }else{
                 //フラッシュになってるか調べる
-                $numrole = $this->numscrutiny($hand,3);
+                $handRole = $this->numscrutiny($hand,3);
                 //フラッシュだった場合
-                if($numrole[0] == 5){
-                    $result = array("フラッシュ！",$numrole[1],$numrole[2]);
-                    return $result;
+                if($handRole[0] == 5){
+                    $resultInfo = array("フラッシュ！",$handRole[1],$handRole[2]);
+                    return $resultInfo;
                 //何も当てはまらない場合ノーペア
                 }else{
-                    $result = array("ノーペア",$numrole[1],$numrole[2]);
-                    return $result;
+                    $resultInfo = array("ノーペア",$handRole[1],$handRole[2]);
+                    return $resultInfo;
                 }
             }
         }
     }
 
-    //$ifが1だと同じ数を探す、2だと連続した数字のカードの枚数を調べる、3だと最も多いマークの枚数調べる。
-    //$ifが1の場合戻り値は[同じ数字の枚数][同じ数字が複数個あるか][数字][マーク]
-    //$ifが2か3の場合戻り値は[2は並んでいる数字の数・3は最も多いマークの枚数][数字][マーク]
-    private function numscrutiny($hand,$if){
+    //$patternが1だと同じ数を探す、2だと連続した数字のカードの枚数を調べる、3だと最も多いマークの枚数調べる。
+    //$patternが1の場合戻り値は[同じ数字の枚数][同じ数字が複数個あるか][数字][マーク]
+    //$patternが2か3の場合戻り値は[2は並んでいる数字の数・3は最も多いマークの枚数][数字][マーク]
+    private function numscrutiny($hand,$pattern){
         $strength = 0;
         //同じ数字を探す
-        if($if == 1){
-            //$sum[同じ数字のカードが最も多い数字の枚数][同じ数字のカードが複数あるか][数字][マーク]
-            $sum = array(1,0,0,"");
+        if($pattern == 1){
+            //$info[同じ数字のカードが最も多い数字の枚数][同じ数字のカードが複数あるか][数字][マーク]
+            $info = array(1,0,0,"");
             //1～13がそれぞれ何枚あるか調べる
             for($i = 1;$i <= $this->max_card;$i++){
-                $tmp = 0;
-                $tmpm = "";
+                $numberOfCards = 0;
+                $strongMark = "";
                 for($j = 0;$j < $this->phand;$j++){
-                    //調べたい数字と手札の数字が同じなら$tmpの数を増やす
+                    //調べたい数字と手札の数字が同じなら$numberOfCardsの数を増やす
                     if($hand[$j]["number"] == $i){
-                        $tmp++;
-                        //$tmpmに何も入っていない場合現在のカードのマークを入れる
-                        if($tmpm == ""){
-                            $tmpm = $hand[$j]["mark"];
+                        $numberOfCards++;
+                        //$strongMarkに何も入っていない場合現在のカードのマークを入れる
+                        if($strongMark == ""){
+                            $strongMark = $hand[$j]["mark"];
                         }
                     }
                 }
-                //状況ごとに$sumに数字を代入していく
-                if($tmp > $sum[0] && $sum[0] > 1){
-                    $sum[0] = $tmp;
-                    $sum[1]++;
-                    $sum[2] = $i;
-                    $sum[3] = $tmpm;
-                }elseif($tmp > 1 && $sum[0] > 1){
-                    $sum[1]++;
+                //状況ごとに$infoに数字を代入していく
+                if($numberOfCards > $info[0] && $info[0] > 1){
+                    $info[0] = $numberOfCards;
+                    $info[1]++;
+                    $info[2] = $i;
+                    $info[3] = $strongMark;
+                }elseif($numberOfCards > 1 && $info[0] > 1){
+                    $info[1]++;
                     
-                    if($tmp == $sum[0]){
-                        if($sum[2] != 1){
-                            $sum[2] = $i;
-                            $sum[3] = $tmpm;
+                    if($numberOfCards == $info[0]){
+                        if($info[2] != 1){
+                            $info[2] = $i;
+                            $info[3] = $strongMark;
                         }
                     }
-                }elseif($tmp > $sum[0]){
-                    $sum[0] = $tmp;
-                    $sum[2] = $i;
-                    $sum[3] = $tmpm;
+                }elseif($numberOfCards > $info[0]){
+                    $info[0] = $numberOfCards;
+                    $info[2] = $i;
+                    $info[3] = $strongMark;
                 }
             }
-            return $sum;
+            return $info;
         //連続した数字のカードの枚数を調べる
-        }elseif($if == 2){
-            //$sum[連続した数字のカードの枚数][数字][マーク]
-            $sum = array(0,0,"");
+        }elseif($pattern == 2){
+            //$info[連続した数字のカードの枚数][数字][マーク]
+            $info = array(0,0,"");
             $min = $this->max_card;
-            $tmp = 0;
-            $tmpn = 0;
-            $tmpm = 0;
+            $matchCard = 0;
+            $strongNumber = 0;
+            $strongMark = 0;
             for($i = 0;$i < $this->phand;$i++){
                 //カードの中で最も数字の小さい数を調べ$minに格納
                 if($hand[$i]["number"] < $min){
                     $min = $hand[$i]["number"];
                 }
                 //2と13が両方手札にあった場合ストレートはできないので判定する
-                //ちなみに先に$if=1を実行し同じ数字がないことを確認していることを前提に動いているので、
+                //ちなみに先に$pattern=1を実行し同じ数字がないことを確認していることを前提に動いているので、
                 //同じ数字がある場合誤作動する可能性がある。
                 if($hand[$i]["number"] == 2 || $hand[$i]["number"] == 13){
-                    $tmp++;
+                    $matchCard++;
                 }
             }
             //2と13が両方あった場合ストレートにはならないので終了
-            if($tmp >= 2){
-                return $sum;
+            if($matchCard >= 2){
+                return $info;
             }
             for($i = 1;$i < $this->phand;$i++){
-                $bflag = isset($flag) ? $flag : 3;
+                $beforeFlag = isset($flag) ? $flag : 3;
                 $flag = 0;
                 for($j = 0;$j < $this->phand;$j++){
                     //前回の判定で$minより±$iした数字を持ってたかによって処理を変える
                     //0・なかったので即終了。1・上があったのでさらに上を調べる。
                     //2・下があったのでさらに下を調べる。3・上下両方あったのでさらに上下調べる。
-                    switch($bflag){
+                    switch($beforeFlag){
                         case 0:
                         break;
                         case 1:
                         if($min+$i > $this->max_card){
-                            $tmp = $min+$i - $this->max_card;
+                            $matchCard = $min+$i - $this->max_card;
                         }else{
-                            $tmp = $min+$i;
+                            $matchCard = $min+$i;
                         }
-                        if($hand[$j]["number"] == $tmp){
-                            $sum[0]++;
+                        if($hand[$j]["number"] == $matchCard){
+                            $info[0]++;
                             $flag += 1;
-                            $tmpn = $hand[$j]["number"];
-                            $tmpm = $hand[$j]["mark"];
+                            $strongNumber = $hand[$j]["number"];
+                            $strongMark = $hand[$j]["mark"];
                         }
                         break;
                         case 2:
                         if($min-$i < 1){
-                            $tmp = $min-$i + $this->max_card;
+                            $matchCard = $min-$i + $this->max_card;
                         }else{
-                            $tmp = $min-$i;
+                            $matchCard = $min-$i;
                         }
-                        if($hand[$j]["number"] == $tmp){
-                            $sum[0]++;
+                        if($hand[$j]["number"] == $matchCard){
+                            $info[0]++;
                             $flag += 2;
                         }
                         break;
                         case 3:
                         if($min+$i > $this->max_card){
-                            $tmp = $min+$i - $this->max_card;
+                            $matchCard = $min+$i - $this->max_card;
                         }else{
-                            $tmp = $min+$i;
+                            $matchCard = $min+$i;
                         }
-                        if($hand[$j]["number"] == $tmp){
-                            $sum[0]++;
+                        if($hand[$j]["number"] == $matchCard){
+                            $info[0]++;
                             $flag += 1;
-                            $tmpn = $hand[$j]["number"];
-                            $tmpm = $hand[$j]["mark"];
+                            $strongNumber = $hand[$j]["number"];
+                            $strongMark = $hand[$j]["mark"];
                         }
                         if($min-$i < 1){
-                            $tmp = $min-$i + $this->max_card;
+                            $matchCard = $min-$i + $this->max_card;
                         }else{
-                            $tmp = $min-$i;
+                            $matchCard = $min-$i;
                         }
-                        if($hand[$j]["number"] == $tmp){
-                            $sum[0]++;
+                        if($hand[$j]["number"] == $matchCard){
+                            $info[0]++;
                             $flag += 2;
                         }
                         break;
@@ -434,42 +367,42 @@ class poker{
                     }
                 }
             }
-            $sum[1] = $tmpn;
-            $sum[2] = $tmpm;
+            $info[1] = $strongNumber;
+            $info[2] = $strongMark;
             $flag = NULL;
-            return $sum;
-        }elseif($if == 3){
-            $sum = array(0,0,"");
-            $tmpn = 0;
-            $tmpm = "";
+            return $info;
+        }elseif($pattern == 3){
+            $info = array(0,0,"");
+            $strongNumber = 0;
+            $strongMark = "";
             foreach($this->marks as $mark){
-                $tmp = 0;
+                $matchCardCount = 0;
                 for($i = 0;$i < $this->phand;$i++){
                     if($hand[$i]["mark"] == $mark){
-                        $tmp++;
+                        $matchCardCount++;
                     }
-                    if($hand[$i]["number"] > $tmpn && $tmpn != 1){
-                        $tmpn = $hand[$i]["number"];
-                        $tmpm = $hand[$i]["mark"];
+                    if($hand[$i]["number"] > $strongNumber && $strongNumber != 1){
+                        $strongNumber = $hand[$i]["number"];
+                        $strongMark = $hand[$i]["mark"];
                     }
                 }
-                if($sum[0] < $tmp){
-                    $sum[0] = $tmp;
+                if($info[0] < $matchCardCount){
+                    $info[0] = $matchCardCount;
                 }
             }
-            $sum[1] = $tmpn;
-            $sum[2] = $tmpm;
-            return $sum;
+            $info[1] = $strongNumber;
+            $info[2] = $strongMark;
+            return $info;
         }
     }
     //勝敗と得点を付ける。
-    protected function strengthrole($result,$playnum){
+    public function strengthrole($resultInfo,$playnum){
         $totals = array();
         $win = 0;
-        $tmp = 0;
+        $highScore = 0;
         for($i = 0;$i < $playnum;$i++){
             $total = array(0,0);
-            switch($result[$i][0]){
+            switch($resultInfo[$i][0]){
                 case "ロイヤルストレートフラッシュ！！":
                 $total[0] += 50000;
                 break;
@@ -500,22 +433,20 @@ class poker{
                 case "ノーペア":
                 break;
             }
-            if($result[$i][1] == 1){
+            if($resultInfo[$i][1] == 1){
                 $total[0] += $this->max_card * 10;
             }else{
-                $total[0] += ($result[$i][1] - 1) * 10;
+                $total[0] += ($resultInfo[$i][1] - 1) * 10;
             }
             foreach($this->marks as $num => $mark){
-                if($result[$i][2] == $mark){
+                if($resultInfo[$i][2] == $mark){
                     $total[0] += 4 - $num;
                 }
             }
             $totals[$i] = array();
             $totals[$i] = $total;
-        }
-        for($i = 0;$i < $playnum;$i++){
-            if($totals[$i][0] > $tmp){
-                $tmp = $totals[$i][0];
+            if($totals[$i][0] > $highScore){
+                $highScore = $totals[$i][0];
                 $win = $i;
             }
         }
@@ -535,43 +466,43 @@ class poker{
     //3枚同じ数字の場合それらは交換しない→2枚同じ数字が2組の場合それらは交換しない→
     //2枚同じ数字があるときそれらは交換しない→3枚同じマークがあるときそれらは交換しない→
     //これらに当てはまらないときは全部交換
-    private function comchange($hand,$playc){
+    public function comchange($hand,$playc){
         //同じ数字があるかどうか調べる
-        $numrolen = $this->numscrutiny($hand,1);
-        if($numrolen[0] > 1 && $numrolen[1] > 0){
-            if($numrolen[0] == 3){
+        $handRolen = $this->numscrutiny($hand,1);
+        if($handRolen[0] > 1 && $handRolen[1] > 0){
+            if($handRolen[0] == 3){
                 return;
             }
-        }elseif($numrolen[0] > 3){
+        }elseif($handRolen[0] > 3){
             return;
         }else{
             //ストレートになってるか調べる
-            $numrole = $this->numscrutiny($hand,2);
-            if($numrole[0] == 4){
+            $handRole = $this->numscrutiny($hand,2);
+            if($handRole[0] == 4){
                 return;
             }else{
                 //フラッシュになってるか調べる
-                $numrole = $this->numscrutiny($hand,3);
-                if($numrole[0] == 5){
+                $handRole = $this->numscrutiny($hand,3);
+                if($handRole[0] == 5){
                     return;
                 }
             }
         }
         //4枚同じマークの場合それらは交換しない
         foreach($this->marks as $mark){
-            $cards = array();
-            $tmp = 0;
+            $roleCards = array();
+            $matchCard = 0;
             for($i = 0;$i < $this->phand;$i++){
                 if($hand[$i]["mark"] == $mark){
-                    $cards[$tmp] = $i;
-                    $tmp++;
+                    $roleCards[$matchCard] = $i;
+                    $matchCard++;
                 }
             }
-            if($tmp >= 4){
+            if($matchCard >= 4){
                 for($i = 0;$i < $this->phand;$i++){
                     $flag = 0;
-                    for($j = 0;$j < $tmp;$j++){
-                        if($cards[$j] == $i){
+                    for($j = 0;$j < $matchCard;$j++){
+                        if($roleCards[$j] == $i){
                             $flag = 1;
                         }
                     }
@@ -586,127 +517,127 @@ class poker{
         //4つ並んだ数字の場合それらは交換しない
         $min = $this->max_card;
         $max = 0;
-        $tmp = 0;
-        $cards = array(array(),array());
+        $matchCard = 0;
+        $roleCards = array(array(),array());
         for($i = 0;$i < $this->phand;$i++){
             if($hand[$i]["number"] < $min){
                 $min = $hand[$i]["number"];
-                $cards[0][0] = $i;
+                $roleCards[0][0] = $i;
             }
             if($hand[$i]["number"] > $max){
                 $max = $hand[$i]["number"];
-                $cards[1][0] = $i;
+                $roleCards[1][0] = $i;
             }
             if($hand[$i]["number"] == 2 || $hand[$i]["number"] == 13){
-                $tmp++;
+                $matchCard++;
             }
         }
         $summin = 0;
         $summax = 0;
-        if($tmp < 2){
+        if($matchCard < 2){
             for($i = 1;$i < $this->phand-1;$i++){
-                $bflagmin = isset($flagmin) ? $flagmin : 3;
-                $bflagmax = isset($flagmax) ? $flagmax : 3;
+                $beforeFlagmin = isset($flagmin) ? $flagmin : 3;
+                $beforeFlagmax = isset($flagmax) ? $flagmax : 3;
                 $flagmin = 0;
                 $flagmax = 0;
                 for($j = 0;$j < $this->phand;$j++){
-                    switch($bflagmin){
+                    switch($beforeFlagmin){
                         case 0:
                         break;
                         case 1:
                         if($min+$i > $this->max_card){
-                            $tmp = $min+$i - $this->max_card;
+                            $matchCard = $min+$i - $this->max_card;
                         }else{
-                            $tmp = $min+$i;
+                            $matchCard = $min+$i;
                         }
-                        if($hand[$j]["number"] == $tmp){
+                        if($hand[$j]["number"] == $matchCard){
                             $summin++;
-                            $cards[0][$summin] = $j;
+                            $roleCards[0][$summin] = $j;
                             $flagmin += 1;
                         }
                         break;
                         case 2:
                         if($min-$i < 1){
-                            $tmp = $min-$i + $this->max_card;
+                            $matchCard = $min-$i + $this->max_card;
                         }else{
-                            $tmp = $min-$i;
+                            $matchCard = $min-$i;
                         }
-                        if($hand[$j]["number"] == $tmp){
+                        if($hand[$j]["number"] == $matchCard){
                             $summin++;
-                            $cards[0][$summin] = $j;
+                            $roleCards[0][$summin] = $j;
                             $flagmin += 2;
                         }
                         break;
                         case 3:
                         if($min+$i > $this->max_card){
-                            $tmp = $min+$i - $this->max_card;
+                            $matchCard = $min+$i - $this->max_card;
                         }else{
-                            $tmp = $min+$i;
+                            $matchCard = $min+$i;
                         }
-                        if($hand[$j]["number"] == $tmp){
+                        if($hand[$j]["number"] == $matchCard){
                             $summin++;
-                            $cards[0][$summin] = $j;
+                            $roleCards[0][$summin] = $j;
                             $flagmin += 1;
                         }
                         if($min-$i < 1){
-                            $tmp = $min-$i + $this->max_card;
+                            $matchCard = $min-$i + $this->max_card;
                         }else{
-                            $tmp = $min-$i;
+                            $matchCard = $min-$i;
                         }
-                        if($hand[$j]["number"] == $tmp){
+                        if($hand[$j]["number"] == $matchCard){
                             $summin++;
-                            $cards[0][$summin] = $j;
+                            $roleCards[0][$summin] = $j;
                             $flagmin += 2;
                         }
                         break;
                         default:
                     }
-                    switch($bflagmax){
+                    switch($beforeFlagmax){
                         case 0:
                         break;
                         case 1:
                         if($max+$i > $this->max_card){
-                            $tmp = $max+$i - $this->max_card;
+                            $matchCard = $max+$i - $this->max_card;
                         }else{
-                            $tmp = $max+$i;
+                            $matchCard = $max+$i;
                         }
-                        if($hand[$j]["number"] == $tmp){
+                        if($hand[$j]["number"] == $matchCard){
                             $summax++;
-                            $cards[1][$summax] = $j;
+                            $roleCards[1][$summax] = $j;
                             $flagmax += 1;
                         }
                         break;
                         case 2:
                         if($max-$i < 1){
-                            $tmp = $max-$i + $this->max_card;
+                            $matchCard = $max-$i + $this->max_card;
                         }else{
-                            $tmp = $max-$i;
+                            $matchCard = $max-$i;
                         }
-                        if($hand[$j]["number"] == $tmp){
+                        if($hand[$j]["number"] == $matchCard){
                             $summax++;
-                            $cards[1][$summax] = $j;
+                            $roleCards[1][$summax] = $j;
                             $flagmax += 2;
                         }
                         break;
                         case 3:
                         if($max+$i > $this->max_card){
-                            $tmp = $max+$i - $this->max_card;
+                            $matchCard = $max+$i - $this->max_card;
                         }else{
-                            $tmp = $max+$i;
+                            $matchCard = $max+$i;
                         }
-                        if($hand[$j]["number"] == $tmp){
+                        if($hand[$j]["number"] == $matchCard){
                             $summax++;
-                            $cards[1][$summax] = $j;
+                            $roleCards[1][$summax] = $j;
                             $flagmax += 1;
                         }
                         if($max-$i < 1){
-                            $tmp = $max-$i + $this->max_card;
+                            $matchCard = $max-$i + $this->max_card;
                         }else{
-                            $tmp = $max-$i;
+                            $matchCard = $max-$i;
                         }
-                        if($hand[$j]["number"] == $tmp){
+                        if($hand[$j]["number"] == $matchCard){
                             $summax++;
-                            $cards[1][$summax] = $j;
+                            $roleCards[1][$summax] = $j;
                             $flagmax += 2;
                         }
                         break;
@@ -721,7 +652,7 @@ class poker{
                     for($i = 0;$i < $this->phand;$i++){
                         $flag = 0;
                         for($j = 0;$j <= $summin;$j++){
-                            if($cards[0][$j] == $i){
+                            if($roleCards[0][$j] == $i){
                                 $flag = 1;
                             }
                         }
@@ -733,7 +664,7 @@ class poker{
                     for($i = 0;$i < $this->phand;$i++){
                         $flag = 0;
                         for($j = 0;$j <= $summax;$j++){
-                            if($cards[1][$j] == $i){
+                            if($roleCards[1][$j] == $i){
                                 $flag = 1;
                             }
                         }
@@ -748,14 +679,14 @@ class poker{
 
         //ストレートリーチ(中抜け)の場合それらは交換しない
         for($i = $this->max_card+1;$i >= 5;$i--){
-            $cards = array();
+            $roleCards = array();
             $sum = 0;
             for($j = $i;$j > $i-$this->phand;$j--){
                 $flag = 0;
                 for($k = 0;$k < $this->phand;$k++){
                     if($hand[$k]["number"] == $j || $hand[$k]["number"] == $j - $this->max_card){
                         $flag = 1;
-                        $cards[$sum] = $k;
+                        $roleCards[$sum] = $k;
                     }
                 }
                 if($flag == 1){
@@ -766,7 +697,7 @@ class poker{
                 for($i = 0;$i < $this->phand;$i++){
                     $flag = 0;
                     for($j = 0;$j < $sum;$j++){
-                        if($cards[$j] == $i){
+                        if($roleCards[$j] == $i){
                             $flag = 1;
                         }
                     }
@@ -781,22 +712,22 @@ class poker{
         //3枚同じ数字の場合それらは交換しない→2枚同じ数字が2組の場合それらは交換しない→
         //2枚同じ数字があるときそれらは交換しない
         $sum = 1;
-        $cards = array();
+        $roleCards = array();
         $two = 1;
         for($i = 1;$i <= $this->max_card;$i++){
-            $tmp = 0;
+            $matchCardCount = 0;
             for($j = 0;$j < $this->phand;$j++){
                 if($hand[$j]["number"] == $i && $sum < 2){
-                    $cards[$tmp] = $j;
-                    $tmp++;
+                    $roleCards[$matchCardCount] = $j;
+                    $matchCardCount++;
                 }elseif($hand[$j]["number"] == $i){
-                    $cards[$tmp+$sum] = $j;
-                    $tmp++;
+                    $roleCards[$matchCardCount+$sum] = $j;
+                    $matchCardCount++;
                 }
             }
-            if($tmp > $sum){
-                $sum = $tmp;
-            }elseif($sum > 1 && $tmp > 1){
+            if($matchCardCount > $sum){
+                $sum = $matchCardCount;
+            }elseif($sum > 1 && $matchCardCount > 1){
                 $two++;
                 break;
             }
@@ -805,7 +736,7 @@ class poker{
             for($i = 0;$i < $this->phand;$i++){
                 $flag = 0;
                 for($j = 0;$j < $sum;$j++){
-                    if($cards[$j] == $i){
+                    if($roleCards[$j] == $i){
                         $flag = 1;
                     }
                 }
@@ -818,7 +749,7 @@ class poker{
             for($i = 0;$i < $this->phand;$i++){
                 $flag = 0;
                 for($j = 0;$j < $sum+$two;$j++){
-                    if($cards[$j] == $i){
+                    if($roleCards[$j] == $i){
                         $flag = 1;
                     }
                 }
@@ -831,7 +762,7 @@ class poker{
             for($i = 0;$i < $this->phand;$i++){
                 $flag = 0;
                 for($j = 0;$j < $sum;$j++){
-                    if($cards[$j] == $i){
+                    if($roleCards[$j] == $i){
                         $flag = 1;
                     }
                 }
@@ -844,19 +775,19 @@ class poker{
 
         //3枚同じマークがあるときそれらは交換しない
         foreach($this->marks as $mark){
-            $cards = array();
-            $tmp = 0;
+            $roleCards = array();
+            $MatchCardMark = 0;
             for($i = 0;$i < $this->phand;$i++){
                 if($hand[$i]["mark"] == $mark){
-                    $cards[$tmp] = $i;
-                    $tmp++;
+                    $roleCards[$MatchCardMark] = $i;
+                    $MatchCardMark++;
                 }
             }
-            if($tmp >= 3){
+            if($MatchCardMark >= 3){
                 for($i = 0;$i < $this->phand;$i++){
                     $flag = 0;
-                    for($j = 0;$j < $tmp;$j++){
-                        if($cards[$j] == $i){
+                    for($j = 0;$j < $MatchCardMark;$j++){
+                        if($roleCards[$j] == $i){
                             $flag = 1;
                         }
                     }

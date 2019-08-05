@@ -41,16 +41,16 @@ function shuffleDeck(deck){
     for(var i = 0;i < 10000;i++){
         let card1 = Math.floor(Math.random()*MAX_CARD);
         let card2 = Math.floor(Math.random()*MAX_CARD);
-        let tmp = new Array();
-        tmp = deck[card1];
+        let temp = new Array();
+        temp = deck[card1];
         deck[card1] = deck[card2];
-        deck[card2] = tmp;
+        deck[card2] = temp;
     }
 }
 
 //キャラクター名を入れる,各プレイヤーのスコアと初期ベットを入れる
 //1ゲーム終了時の初期化で初期化しないものには初期値を渡し、初期化しないようにする
-function makeCharaData(hands,bet,betActions,info,computerFace,players = new Array(),score = new Array(),personalityType = new Array()){
+function makeCharaData(hands,bets,betActions,info,computerFace,players = new Array(),score = new Array(),personalityType = new Array()){
     var banker = new Array(info[0]-2,info[0]-1);
     //初期ベットの位置を調べる
     for(var i = 0;i < banker.length;i++){
@@ -66,13 +66,13 @@ function makeCharaData(hands,bet,betActions,info,computerFace,players = new Arra
             hands["Player"] = new Array();
             score["Player"] = FIRST_POINT;
             if(i == banker[0]){
-                bet["Player"] = STANDARD_BET/2;
+                bets["Player"] = STANDARD_BET/2;
                 betActions[name] = "";
             }else if(i == banker[1]){
-                bet["Player"] = STANDARD_BET;
+                bets["Player"] = STANDARD_BET;
                 betActions["Player"] = ACTIONS[0];
             }else{
-                bet["Player"] = 0;
+                bets["Player"] = 0;
                 betActions[name] = "";
             }
         }else{  //それ以外はコンピューターを初期化
@@ -81,13 +81,13 @@ function makeCharaData(hands,bet,betActions,info,computerFace,players = new Arra
             hands[name] = new Array();
             score[name] = FIRST_POINT;
             if(i == banker[0]){
-                bet[name] = STANDARD_BET/2;
+                bets[name] = STANDARD_BET/2;
                 betActions[name] = "";
             }else if(i == banker[1]){
-                bet[name] = STANDARD_BET;
+                bets[name] = STANDARD_BET;
                 betActions[name] = ACTIONS[0];
             }else{
-                bet[name] = 0;
+                bets[name] = 0;
                 betActions[name] = "";
             }
             personalityType[name] = new Array();
@@ -897,22 +897,22 @@ function playerAction(action,texas){
     //現在の最高額の掛け金を調べる
     var maxbet = 0;
     for(name of texas.players){
-        if(maxbet < texas.bet[name]){
-            maxbet = texas.bet[name];
+        if(maxbet < texas.bets[name]){
+            maxbet = texas.bets[name];
         }
     }
     switch(action){
         case ACTIONS[0]:    //bet
         texas.betActions["Player"] = ACTIONS[0];
-        texas.bet["Player"] += STANDARD_BET;
+        texas.bets["Player"] += STANDARD_BET;
         break;
         case ACTIONS[1]:    //call
         texas.betActions["Player"] = ACTIONS[1];
-        texas.bet["Player"] = maxbet;
+        texas.bets["Player"] = maxbet;
         break;
         case ACTIONS[2]:    //raise
         texas.betActions["Player"] = ACTIONS[2];
-        texas.bet["Player"] = maxbet + STANDARD_BET;
+        texas.bets["Player"] = maxbet + STANDARD_BET;
         texas.nowInfo[4]++;
         break;
         case ACTIONS[3]:    //fold
@@ -921,14 +921,15 @@ function playerAction(action,texas){
     }
 
     //終了判定
-    let sbetFlag = 0;
+    maxbet = 0;
+    let maxbetFlag = 0;
     let finFlag = 0;
     for(var i = 0;i < NUMBER_OF_PLAYER;i++){
-        if(sbetFlag == 0 && texas.betActions[texas.players[i]] != ACTIONS[3]){
-            var sbet = texas.bet[texas.players[i]];
-            sbetFlag = 1;
+        if(maxbetFlag == 0 && texas.betActions[texas.players[i]] != ACTIONS[3]){
+            maxbet = texas.bets[texas.players[i]];
+            maxbetFlag = 1;
             finFlag++;
-        }else if(texas.bet[texas.players[i]] == sbet || texas.betActions[texas.players[i]] == ACTIONS[3]){
+        }else if(texas.bets[texas.players[i]] == maxbet || texas.betActions[texas.players[i]] == ACTIONS[3]){
             finFlag++;
         }
         if(texas.betActions[texas.players[i]] != ""){
@@ -987,11 +988,13 @@ function makeFiveHand(hand,allhand){
 //ベットアクション周りの動作
 function betAction(texas){
     var betActionTimer = function(){
+        var texas_id = document.getElementById("texas");
         while(texas.nowInfo[0] >= NUMBER_OF_PLAYER){
             texas.nowInfo[0] -= NUMBER_OF_PLAYER;
         }
         //プレイヤーのターンの場合
         if(texas.nowInfo[0] == NUMBER_OF_PLAYER-1){
+            var field_id = document.getElementById("Playerfield");
             if(texas.betActions[texas.players[texas.nowInfo[0]]] != ACTIONS[3]){    //フォールドしていないかの判定
                 updateGraph(texas);
                 let betFlag = 0;
@@ -1002,37 +1005,37 @@ function betAction(texas){
                 }
                 if(betFlag >= NUMBER_OF_PLAYER){
                     //誰もベットしていない場合
-                    document.getElementById("texas").insertAdjacentHTML("beforeend","<div id='actionbutton'><input id='Bet' type='submit' value='ベット'><input id='Fold' type='submit' value='フォールド'></div>");
-                    document.getElementById("actionbutton").style.position = "absolute";
-                    document.getElementById("actionbutton").style.top = (BLOCK_HEIGHT * 2.5 + HEADER_HEIGHT - FONT_SIZE) + "px";
-                    document.getElementById("actionbutton").style.left = (BLOCK_WIDTH * 7) + "px";
+                    field_id.insertAdjacentHTML("beforeend","<div id='actionbutton'><input id='Bet' type='submit' value='ベット'><input id='Fold' type='submit' value='フォールド'></div>");
+                    document.getElementById("actionbutton").style.position = "relative";
+                    document.getElementById("actionbutton").style.top = (BLOCK_HEIGHT * (-0.5)) + "px";
+                    document.getElementById("actionbutton").style.left = (BLOCK_WIDTH * 2.5) + "px";
                     document.getElementById("Bet").onclick = function(){
                         playerAction(ACTIONS[0],texas);
-                        document.getElementById("texas").removeChild(document.getElementById("actionbutton"));
+                        field_id.removeChild(document.getElementById("actionbutton"));
                     }
                     document.getElementById("Fold").onclick = function(){
                         playerAction(ACTIONS[3],texas);
-                        document.getElementById("texas").removeChild(document.getElementById("actionbutton"));
+                        field_id.removeChild(document.getElementById("actionbutton"));
                     }
                     document.getElementById("Fold").style.position = "relative";
                     document.getElementById("Fold").style.left = 20 + "px";
                 }else{
                     //すでに誰かがベットした後の場合
-                    document.getElementById("texas").insertAdjacentHTML("beforeend","<div id='actionbutton'><input id='Call' type='submit' value='コール'><input id='Raise' type='submit' value='レイズ'><input id='Fold' type='submit' value='フォールド'></div>");
-                    document.getElementById("actionbutton").style.position = "absolute";
-                    document.getElementById("actionbutton").style.top = (BLOCK_HEIGHT * 2.5 + HEADER_HEIGHT - FONT_SIZE) + "px";
-                    document.getElementById("actionbutton").style.left = (BLOCK_WIDTH * 7) + "px";
+                    field_id.insertAdjacentHTML("beforeend","<div id='actionbutton'><input id='Call' type='submit' value='コール'><input id='Raise' type='submit' value='レイズ'><input id='Fold' type='submit' value='フォールド'></div>");
+                    document.getElementById("actionbutton").style.position = "relative";
+                    document.getElementById("actionbutton").style.top = (BLOCK_HEIGHT * (-0.5)) + "px";
+                    document.getElementById("actionbutton").style.left = (BLOCK_WIDTH * 2.5) + "px";
                     document.getElementById("Call").onclick = function(){
                         playerAction(ACTIONS[1],texas);
-                        document.getElementById("texas").removeChild(document.getElementById("actionbutton"));
+                        field_id.removeChild(document.getElementById("actionbutton"));
                     }
                     document.getElementById("Raise").onclick = function(){
                         playerAction(ACTIONS[2],texas);
-                        document.getElementById("texas").removeChild(document.getElementById("actionbutton"));
+                        field_id.removeChild(document.getElementById("actionbutton"));
                     }
                     document.getElementById("Fold").onclick = function(){
                         playerAction(ACTIONS[3],texas);
-                        document.getElementById("texas").removeChild(document.getElementById("actionbutton"));
+                        field_id.removeChild(document.getElementById("actionbutton"));
                     }
                     document.getElementById("Raise").style.position = "relative";
                     document.getElementById("Fold").style.position = "relative";
@@ -1050,10 +1053,10 @@ function betAction(texas){
                 let finFlag = 0;
                 for(var i = 0;i < NUMBER_OF_PLAYER;i++){
                     if(sbetFlag == 0 && texas.betActions[texas.players[i]] != ACTIONS[3]){
-                        var sbet = texas.bet[texas.players[i]];
+                        var sbet = texas.bets[texas.players[i]];
                         sbetFlag = 1;
                         finFlag++;
-                    }else if(texas.bet[texas.players[i]] == sbet || texas.betActions[texas.players[i]] == ACTIONS[3]){
+                    }else if(texas.bets[texas.players[i]] == sbet || texas.betActions[texas.players[i]] == ACTIONS[3]){
                         finFlag++;
                     }
                     if(texas.betActions[texas.players[i]] != ""){
@@ -1098,23 +1101,23 @@ function betAction(texas){
                 //アクションを判定格納し、対応したアクションを実行する
                 switch(texas.betActions[texas.players[texas.nowInfo[0]]] = computerBetAction(texas,texas.players[texas.nowInfo[0]])){
                     case ACTIONS[0]:    //bet
-                    texas.bet[texas.players[texas.nowInfo[0]]] += STANDARD_BET;
+                    texas.bets[texas.players[texas.nowInfo[0]]] += STANDARD_BET;
                     break;
                     case ACTIONS[1]:    //call
                     for(var i = 0;i < NUMBER_OF_PLAYER;i++){
-                        if(bet < texas.bet[texas.players[i]]){
-                            bet = texas.bet[texas.players[i]];
+                        if(bet < texas.bets[texas.players[i]]){
+                            bet = texas.bets[texas.players[i]];
                         }
                     }
-                    texas.bet[texas.players[texas.nowInfo[0]]] = bet;
+                    texas.bets[texas.players[texas.nowInfo[0]]] = bet;
                     break;
                     case ACTIONS[2]:    //raise
                     for(var i = 0;i < NUMBER_OF_PLAYER;i++){
-                        if(bet < texas.bet[texas.players[i]]){
-                            bet = texas.bet[texas.players[i]];
+                        if(bet < texas.bets[texas.players[i]]){
+                            bet = texas.bets[texas.players[i]];
                         }
                     }
-                    texas.bet[texas.players[texas.nowInfo[0]]] = bet + STANDARD_BET;
+                    texas.bets[texas.players[texas.nowInfo[0]]] = bet + STANDARD_BET;
                     break;
                 }
             }
@@ -1125,10 +1128,10 @@ function betAction(texas){
             let finFlag = 0;
             for(var i = 0;i < NUMBER_OF_PLAYER;i++){
                 if(sbetFlag == 0 && texas.betActions[texas.players[i]] != ACTIONS[3]){
-                    var sbet = texas.bet[texas.players[i]];
+                    var sbet = texas.bets[texas.players[i]];
                     sbetFlag = 1;
                     finFlag++;
-                }else if(texas.bet[texas.players[i]] == sbet || texas.betActions[texas.players[i]] == ACTIONS[3]){
+                }else if(texas.bets[texas.players[i]] == sbet || texas.betActions[texas.players[i]] == ACTIONS[3]){
                     finFlag++;
                 }
                 if(texas.betActions[texas.players[i]] != ""){
@@ -1242,12 +1245,12 @@ function judgment(texas,result){
         var victorys = new Array(victory);
         alert("勝者は" + victory + "！");
         for(var i = 0;i < NUMBER_OF_PLAYER;i++){
-            victoryPoint += texas.bet[texas.players[i]];
+            victoryPoint += texas.bets[texas.players[i]];
         }
         for(var i = 0;i < NUMBER_OF_PLAYER;i++){
-            texas.score[texas.players[i]] -= texas.bet[texas.players[i]];
+            texas.score[texas.players[i]] -= texas.bets[texas.players[i]];
             if(texas.players[i] != victory){
-                victoryText += texas.players[i] + " : -$" + texas.bet[texas.players[i]] + "\n";
+                victoryText += texas.players[i] + " : -$" + texas.bets[texas.players[i]] + "\n";
             }else{
                 victoryText += texas.players[i] + " : +$" + victoryPoint + "\n";
                 texas.score[texas.players[i]] += victoryPoint;
@@ -1281,12 +1284,12 @@ function judgment(texas,result){
                 var victorys = new Array(victory);
                 alert("勝者は" + victory + "！");
                 for(var i = 0;i < NUMBER_OF_PLAYER;i++){
-                    victoryPoint += texas.bet[texas.players[i]];
+                    victoryPoint += texas.bets[texas.players[i]];
                 }
                 for(var i = 0;i < NUMBER_OF_PLAYER;i++){
-                    texas.score[texas.players[i]] -= texas.bet[texas.players[i]];
+                    texas.score[texas.players[i]] -= texas.bets[texas.players[i]];
                     if(texas.players[i] != victory){
-                        victoryText += texas.players[i] + " : -$" + texas.bet[texas.players[i]] + "\n";
+                        victoryText += texas.players[i] + " : -$" + texas.bets[texas.players[i]] + "\n";
                     }else{
                         victoryText += texas.players[i] + " : +$" + victoryPoint + "\n";
                         texas.score[texas.players[i]] += victoryPoint;
@@ -1312,7 +1315,7 @@ function judgment(texas,result){
             alert(victoryText);
             victoryText = "";
             for(var i = 0;i < NUMBER_OF_PLAYER;i++){
-                victoryPoint += texas.bet[texas.players[i]];
+                victoryPoint += texas.bets[texas.players[i]];
             }
             victoryPoint /= victoryNum.length;
             for(var i = 0;i < NUMBER_OF_PLAYER;i++){
@@ -1322,9 +1325,9 @@ function judgment(texas,result){
                         victoryFlag = 1;
                     }
                 }
-                texas.score[texas.players[i]] -= texas.bet[texas.players[i]];
+                texas.score[texas.players[i]] -= texas.bets[texas.players[i]];
                 if(victoryFlag == 0){
-                    victoryText += texas.players[i] + " : -$" + texas.bet[texas.players[i]] + "\n";
+                    victoryText += texas.players[i] + " : -$" + texas.bets[texas.players[i]] + "\n";
                 }else{
                     victoryText += texas.players[i] + " : +$" + victoryPoint + "\n";
                     texas.score[texas.players[i]] += victoryPoint;
@@ -1428,10 +1431,21 @@ function drawFace(texas,chara,end = ""){
     document.getElementById(chara + "face").appendChild(image);
 }
 
+function drawCard(texas, chara, number, id, frontback = "front"){
+    var image = new Image(CARD_WIDTH,CARD_HEIGHT);
+    if(frontback == "front"){
+        image.src = "./image/" + texas.hands[chara][number]["number"] + "of" + texas.hands[chara][number]["mark"] + ".png";
+    }else if(frontback == "back"){
+        image.src = "./image/backcard.png";
+    }
+    image.className = "card";
+    id.appendChild(image);
+}
+
 function updateGraph(texas){
     for(var chara in texas.hands){
         if(chara != "Table"){
-            document.getElementById(chara + "betaction").innerText = chara + " $" + (texas.score[chara] - texas.bet[chara]) + "\nBet:$" + texas.bet[chara] + " " + texas.betActions[chara];
+            document.getElementById(chara + "betaction").innerText = chara + " $" + (texas.score[chara] - texas.bets[chara]) + "\nBet:$" + texas.bets[chara] + " " + texas.betActions[chara];
         }else{
             var num = 0;
             switch(texas.nowInfo[1]){
@@ -1445,17 +1459,13 @@ function updateGraph(texas){
                 num = 4;
                 break;
             }
-            while(document.getElementById(chara + "card").firstChild){
-                document.getElementById(chara + "card").removeChild(document.getElementById(chara + "card").firstChild);
+            while(document.getElementById(chara + "field").firstChild){
+                document.getElementById(chara + "field").removeChild(document.getElementById(chara + "field").firstChild);
             }
-            document.getElementById(chara + "card").insertAdjacentHTML("beforeend","<h3 class='texastext'>" + chara +"</h3>");
+            document.getElementById(chara + "field").insertAdjacentHTML("beforeend","<h3 class='texastext'>" + chara +"</h3>");
             for(var i = 0;i < num;i++){
-                // document.getElementById(chara + "card").insertAdjacentHTML("beforeend","<div class='card'>" + texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"] + "</div>");
-                var image = new Image(CARD_WIDTH,CARD_HEIGHT);
-                image.src = "./image/" + texas.hands[chara][i]["number"] + "of" + texas.hands[chara][i]["mark"] + ".png";
-                image.className = "card";
-                image.alt = texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"];
-                document.getElementById(chara + "card").appendChild(image);
+                // document.getElementById(chara + "field").insertAdjacentHTML("beforeend","<div class='card'>" + texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"] + "</div>");
+                drawCard(texas,chara,i,document.getElementById(chara + "field"));
             }
         }
     }
@@ -1463,88 +1473,49 @@ function updateGraph(texas){
 
 //描写処理
 function drawGraph(texas){
-    document.getElementById("texas").textContent = null;
+    var texas_id = document.getElementById("texas");
+    texas_id.textContent = null;
     for(var chara in texas.hands){
         if(chara == "Table"){
-            document.getElementById("texas").insertAdjacentHTML("beforeend","<div id='" + chara + "card'><h3 class='texastext'>" + chara +"</h3></div>");
+            document.getElementById("Playerfield").insertAdjacentHTML("beforebegin","<div id='" + chara + "field'><h3 class='texastext'>" + chara +"</h3></div>");
         }else if(chara == "Player"){
-            document.getElementById("texas").insertAdjacentHTML("beforeend","<div id='" + chara + "card'><h3 id='" + chara + "betaction' class='texastext'>" + chara + " $" + (texas.score[chara] - texas.bet[chara]) + "<br>Bet:$" + texas.bet[chara] + " " + texas.betActions[chara] + "</h3></div>");
+            texas_id.insertAdjacentHTML("beforeend","<div id='" + chara + "field'><h3 id='" + chara + "betaction' class='texastext'>" + chara + " $" + (texas.score[chara] - texas.bets[chara]) + "<br>Bet:$" + texas.bets[chara] + " " + texas.betActions[chara] + "</h3></div>");
         }else{
-            document.getElementById("texas").insertAdjacentHTML("beforeend","<div id='" + chara + "card'><div id='" + chara +"face' style='display :inline-block; vertical-align :top;'></div><div id='" + chara + "action' style='vertical-align :top'><h3 id='" + chara + "betaction' class='texastext'>" + chara + " $" + (texas.score[chara] - texas.bet[chara]) + "<br>Bet:$" + texas.bet[chara] + " " + texas.betActions[chara] + "</h3></div></div>");
+            texas_id.insertAdjacentHTML("beforeend","<div id='" + chara + "field'><div id='" + chara +"face' style='display :inline-block; vertical-align :top;'></div><div id='" + chara + "action' style='vertical-align :top'><h3 id='" + chara + "betaction' class='texastext'>" + chara + " $" + (texas.score[chara] - texas.bets[chara]) + "<br>Bet:$" + texas.bets[chara] + " " + texas.betActions[chara] + "</h3></div></div>");
             document.getElementById(chara + "action").style.display = "inline-block";
             document.getElementById(chara + "action").style.width = (BLOCK_WIDTH * 2) + "px";
             document.getElementById(chara + "action").style.height = BLOCK_HEIGHT + "px";
         }
         if(chara == "Player"){
             for(var i = 0;i < PLAYER_HAND;i++){
-                // document.getElementById(chara + "card").insertAdjacentHTML("beforeend","<div class='card'>" + texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"] + "</div>");
-                var image = new Image(CARD_WIDTH,CARD_HEIGHT);
-                image.src = "./image/" + texas.hands[chara][i]["number"] + "of" + texas.hands[chara][i]["mark"] + ".png";
-                image.className = "card";
-                image.alt = texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"];
-                document.getElementById(chara + "card").appendChild(image);
+                // document.getElementById(chara + "field").insertAdjacentHTML("beforeend","<div class='card'>" + texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"] + "</div>");
+                drawCard(texas,chara,i,document.getElementById(chara + "field"));
             }
-        }else if(chara == "Table"){
-            var num = 0;
-            switch(texas.nowInfo[1]){
-                case 0:
-                num = 0;
-                break;
-                case 1:
-                num = 3;
-                break;
-                case 2:
-                num = 4;
-                break;
-            }
-            for(var i = 0;i < num;i++){
-                // document.getElementById(chara + "card").insertAdjacentHTML("beforeend","<div class='card'>" + texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"] + "</div>");
-                var image = new Image(CARD_WIDTH,CARD_HEIGHT);
-                image.src = "./image/" + texas.hands[chara][i]["number"] + "of" + texas.hands[chara][i]["mark"] + ".png";
-                image.className = "card";
-                image.alt = texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"];
-                document.getElementById(chara + "card").appendChild(image);
-            }
-        }else{
+        }else if(chara != "Table"){
             drawFace(texas,chara);
             for(var i = 0;i < PLAYER_HAND;i++){
-                var image = new Image(CARD_WIDTH,CARD_HEIGHT);
-                image.src = "./image/backcard.png";
-                image.className = "card";
-                document.getElementById(chara + "action").appendChild(image);
+                drawCard(texas,chara,i,document.getElementById(chara + "action"),"back");
             }
         }
-        document.getElementById(chara + "card").style.position = "absolute";
+        var element_id = document.getElementById(chara + "field");
         switch(chara){
             case "Computer1":
-            document.getElementById(chara + "card").style.top = (HEADER_HEIGHT) + "px";
-            document.getElementById(chara + "card").style.left = 0;
-            document.getElementById(chara + "card").style.height = BLOCK_HEIGHT + "px";
-            document.getElementById(chara + "card").style.width = (BLOCK_WIDTH * 2 + FACE_IMAGE_WIDTH) + "px";
-            break;
             case "Computer2":
-            document.getElementById(chara + "card").style.top = (HEADER_HEIGHT) + "px";
-            document.getElementById(chara + "card").style.left = (BLOCK_WIDTH * 2.5 + FACE_IMAGE_WIDTH) + "px";
-            document.getElementById(chara + "card").style.height = BLOCK_HEIGHT + "px";
-            document.getElementById(chara + "card").style.width = (BLOCK_WIDTH * 2 + FACE_IMAGE_WIDTH) + "px";
-            break;
             case "Computer3":
-            document.getElementById(chara + "card").style.top = (HEADER_HEIGHT) + "px";
-            document.getElementById(chara + "card").style.left = (BLOCK_WIDTH * 5 + FACE_IMAGE_WIDTH * 2) + "px";
-            document.getElementById(chara + "card").style.height = BLOCK_HEIGHT + "px";
-            document.getElementById(chara + "card").style.width = (BLOCK_WIDTH * 2 + FACE_IMAGE_WIDTH) + "px";
+            element_id.style.display = "inline-block";
+            element_id.style.marginTop = "10px";
+            element_id.style.height = BLOCK_HEIGHT + "px";
+            element_id.style.width = (BLOCK_WIDTH * 2 + FACE_IMAGE_WIDTH) + "px";
             break;
             case "Player":
-            document.getElementById(chara + "card").style.top = (BLOCK_HEIGHT * 2 + HEADER_HEIGHT - FONT_SIZE) + "px";
-            document.getElementById(chara + "card").style.left = (BLOCK_WIDTH * 3 + FACE_IMAGE_WIDTH) + "px";
-            document.getElementById(chara + "card").style.height = BLOCK_HEIGHT + "px";
-            document.getElementById(chara + "card").style.width = (BLOCK_WIDTH * 2.5) + "px";
+            element_id.style.margin = "10px auto";
+            element_id.style.height = BLOCK_HEIGHT + "px";
+            element_id.style.width = (BLOCK_WIDTH * 2) + "px";
             break;
             case "Table":
-            document.getElementById(chara + "card").style.top = (BLOCK_HEIGHT + HEADER_HEIGHT) + "px";
-            document.getElementById(chara + "card").style.left = (BLOCK_WIDTH * 1.5 + FACE_IMAGE_WIDTH) + "px";
-            document.getElementById(chara + "card").style.height = (BLOCK_HEIGHT - FONT_SIZE) + "px";
-            document.getElementById(chara + "card").style.width = (BLOCK_WIDTH * 5.5) + "px";
+            element_id.style.margin = "10px auto";
+            element_id.style.height = BLOCK_HEIGHT + "px";
+            element_id.style.width = (BLOCK_WIDTH * 5) + "px";
             break;
         }
     }
@@ -1568,87 +1539,63 @@ function resultDraw(texas){
         }
     }
     var victory = judgment(texas,result);
-    document.getElementById("texas").textContent = null;
+    var texas_id = document.getElementById("texas");
+    texas_id.textContent = null;
     for(var chara in texas.hands){
         if(chara == "Table"){
-            document.getElementById("texas").insertAdjacentHTML("beforeend","<div id='" + chara + "card'><h3 class='texastext'>" + chara +"</h3></div>");
+            texas_id.insertAdjacentHTML("beforeend","<div id='" + chara + "field'><h3 class='texastext'>" + chara +"</h3></div>");
         }else if(chara == "Player"){
-            document.getElementById("texas").insertAdjacentHTML("beforeend","<div id='" + chara + "card'><h3 class='texastext'>" + chara + " $" + texas.score[chara] + "</h3><h3 class='texastext'>Bet:$" + texas.bet[chara] + " " + result[chara][0] + "</h3></div>");
+            texas_id.insertAdjacentHTML("beforeend","<div id='" + chara + "field'><h3 class='texastext'>" + chara + " $" + texas.score[chara] + "</h3><h3 class='texastext'>Bet:$" + texas.bets[chara] + " " + result[chara][0] + "</h3></div>");
         }else{
-            document.getElementById("texas").insertAdjacentHTML("beforeend","<div id='" + chara + "card'><div id='" + chara +"face' style='display :inline-block; vertical-align :top;'></div><div id='" + chara + "action' style='vertical-align :top'><h3 class='texastext'>" + chara + " $" + texas.score[chara] + "</h3><h3 class='texastext' id='" + chara + "action'>Bet:$" + texas.bet[chara] + " " + result[chara][0] + "</h3></div></div>");
+            texas_id.insertAdjacentHTML("beforeend","<div id='" + chara + "field'><div id='" + chara +"face' style='display :inline-block; vertical-align :top;'></div><div id='" + chara + "action' style='vertical-align :top'><h3 class='texastext'>" + chara + " $" + texas.score[chara] + "</h3><h3 class='texastext' id='" + chara + "action'>Bet:$" + texas.bets[chara] + " " + result[chara][0] + "</h3></div></div>");
             document.getElementById(chara + "action").style.display = "inline-block";
             document.getElementById(chara + "action").style.width = (BLOCK_WIDTH * 2) + "px";
             document.getElementById(chara + "action").style.height = BLOCK_HEIGHT + "px";
         }
         if(chara == "Table"){
             for(var i = 0;i < TABLE_HAND;i++){
-                // document.getElementById(chara + "card").insertAdjacentHTML("beforeend","<div class='card'>" + texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"] + "</div>");
-                var image = new Image(CARD_WIDTH,CARD_HEIGHT);
-                image.src = "./image/" + texas.hands[chara][i]["number"] + "of" + texas.hands[chara][i]["mark"] + ".png";
-                image.className = "card";
-                image.alt = texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"];
-                document.getElementById(chara + "card").appendChild(image);
+                // document.getElementById(chara + "field").insertAdjacentHTML("beforeend","<div class='card'>" + texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"] + "</div>");
+                drawCard(texas,chara,i,document.getElementById(chara + "field"));
             }
         }else{
             if(chara != "Player"){
                 drawFace(texas,chara,victory);
                  for(var i = 0;i < PLAYER_HAND;i++){
                     // document.getElementById(chara + "action").insertAdjacentHTML("beforeend","<div class='card'>" + texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"] + "</div>");
-                    var image = new Image(CARD_WIDTH,CARD_HEIGHT);
-                    image.src = "./image/" + texas.hands[chara][i]["number"] + "of" + texas.hands[chara][i]["mark"] + ".png";
-                    image.className = "card";
-                    image.alt = texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"];
-                    document.getElementById(chara + "action").appendChild(image);
+                drawCard(texas,chara,i,document.getElementById(chara + "action"));
                  }
             }else{
                 for(var i = 0;i < PLAYER_HAND;i++){
-                    // document.getElementById(chara + "card").insertAdjacentHTML("beforeend","<div class='card'>" + texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"] + "</div>");
-                    var image = new Image(CARD_WIDTH,CARD_HEIGHT);
-                    image.src = "./image/" + texas.hands[chara][i]["number"] + "of" + texas.hands[chara][i]["mark"] + ".png";
-                    image.className = "card";
-                    image.alt = texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"];
-                    document.getElementById(chara + "card").appendChild(image);
+                    // document.getElementById(chara + "field").insertAdjacentHTML("beforeend","<div class='card'>" + texas.hands[chara][i]["mark"] + "の" + texas.hands[chara][i]["number"] + "</div>");
+                drawCard(texas,chara,i,document.getElementById(chara + "field"));
                 }
             }
         }
-        document.getElementById(chara + "card").style.position = "absolute";
+        var element_id = document.getElementById(chara + "field");
         switch(chara){
             case "Computer1":
-            document.getElementById(chara + "card").style.top = (HEADER_HEIGHT) + "px";
-            document.getElementById(chara + "card").style.left = 0;
-            document.getElementById(chara + "card").style.height = BLOCK_HEIGHT + "px";
-            document.getElementById(chara + "card").style.width = (BLOCK_WIDTH * 2 + FACE_IMAGE_WIDTH) + "px";
-            break;
             case "Computer2":
-            document.getElementById(chara + "card").style.top = (HEADER_HEIGHT) + "px";
-            document.getElementById(chara + "card").style.left = (BLOCK_WIDTH * 2.5 + FACE_IMAGE_WIDTH) + "px";
-            document.getElementById(chara + "card").style.height = BLOCK_HEIGHT + "px";
-            document.getElementById(chara + "card").style.width = (BLOCK_WIDTH * 2 + FACE_IMAGE_WIDTH) + "px";
-            break;
             case "Computer3":
-            document.getElementById(chara + "card").style.top = (HEADER_HEIGHT) + "px";
-            document.getElementById(chara + "card").style.left = (BLOCK_WIDTH * 5 + FACE_IMAGE_WIDTH * 2) + "px";
-            document.getElementById(chara + "card").style.height = BLOCK_HEIGHT + "px";
-            document.getElementById(chara + "card").style.width = (BLOCK_WIDTH * 2 + FACE_IMAGE_WIDTH) + "px";
+            element_id.style.display = "inline-block";
+            element_id.style.marginTop = "10px";
+            element_id.style.height = BLOCK_HEIGHT + "px";
+            element_id.style.width = (BLOCK_WIDTH * 2 + FACE_IMAGE_WIDTH) + "px";
             break;
             case "Player":
-            document.getElementById(chara + "card").style.top = (BLOCK_HEIGHT * 2 + HEADER_HEIGHT - FONT_SIZE) + "px";
-            document.getElementById(chara + "card").style.left = (BLOCK_WIDTH * 3 + FACE_IMAGE_WIDTH) + "px";
-            document.getElementById(chara + "card").style.height = BLOCK_HEIGHT + "px";
-            document.getElementById(chara + "card").style.width = (BLOCK_WIDTH * 2.5) + "px";
+            element_id.style.margin = "10px auto";
+            element_id.style.height = BLOCK_HEIGHT + "px";
+            element_id.style.width = (BLOCK_WIDTH * 2) + "px";
             break;
             case "Table":
-            document.getElementById(chara + "card").style.top = (BLOCK_HEIGHT + HEADER_HEIGHT) + "px";
-            document.getElementById(chara + "card").style.left = (BLOCK_WIDTH * 1.5 + FACE_IMAGE_WIDTH) + "px";
-            document.getElementById(chara + "card").style.height = (BLOCK_HEIGHT - FONT_SIZE) + "px";
-            document.getElementById(chara + "card").style.width = (BLOCK_WIDTH * 5.5) + "px";
+            element_id.style.margin = "10px auto";
+            element_id.style.height = BLOCK_HEIGHT + "px";
+            element_id.style.width = (BLOCK_WIDTH * 5) + "px";
             break;
         }
     }
     texas.nowInfo[2]++;
     if(texas.nowInfo[2] < GAME){
-        document.getElementById("texas").insertAdjacentHTML("beforeend","<a id='nextGame' href='#texas'><h2>次のゲームへ</h2></a>");
-        document.getElementById("nextGame").style.position = "absolute";
+        texas_id.insertAdjacentHTML("beforeend","<a id='nextGame' href='#texas'><h2>次のゲームへ</h2></a>");
         document.getElementById("nextGame").style.top = (BLOCK_HEIGHT * 2.5 + HEADER_HEIGHT - FONT_SIZE) + "px";
         document.getElementById("nextGame").style.left = (BLOCK_WIDTH * 7) + "px";
         document.getElementById("nextGame").onclick = function(){
@@ -1658,22 +1605,19 @@ function resultDraw(texas){
     }else{
         texas.nowInfo[3]++;
         if(texas.nowInfo[3] >= SET){
-            document.getElementById("texas").insertAdjacentHTML("beforeend","<a id='nextSet' href='#texas'><h2>結果発表！</h2></a>");
-            document.getElementById("nextSet").style.position = "absolute";
+            texas_id.insertAdjacentHTML("beforeend","<a id='nextSet' href='#texas'><h2>結果発表！</h2></a>");
             document.getElementById("nextSet").style.top = (BLOCK_HEIGHT * 2.5 + HEADER_HEIGHT - FONT_SIZE) + "px";
             document.getElementById("nextSet").style.left = (BLOCK_WIDTH * 7) + "px";
             document.getElementById("nextSet").onclick = function(){
                 judgmentGame(texas.score,texas);
-                document.getElementById("texas").removeChild(document.getElementById("nextSet"));
-                document.getElementById("texas").insertAdjacentHTML("beforeend","<a id='nextSet' href='texasholedem.php'><h2>もう一度遊ぶ</h2></a>");
-                document.getElementById("nextSet").style.position = "absolute";
+                texas_id.removeChild(document.getElementById("nextSet"));
+                texas_id.insertAdjacentHTML("beforeend","<a id='nextSet' href='texasholedem.php'><h2>もう一度遊ぶ</h2></a>");
                 document.getElementById("nextSet").style.top = (BLOCK_HEIGHT * 2.5 + HEADER_HEIGHT - FONT_SIZE) + "px";
                 document.getElementById("nextSet").style.left = (BLOCK_WIDTH * 7) + "px";
             }
         }else{
             texas.nowInfo[2] = 0;
-            document.getElementById("texas").insertAdjacentHTML("beforeend","<a id='nextGame' href='#texas'><h2>次のゲームへ</h2></a>");
-            document.getElementById("nextGame").style.position = "absolute";
+            texas_id.insertAdjacentHTML("beforeend","<a id='nextGame' href='#texas'><h2>次のゲームへ</h2></a>");
             document.getElementById("nextGame").style.top = (BLOCK_HEIGHT * 2.5 + HEADER_HEIGHT - FONT_SIZE) + "px";
             document.getElementById("nextGame").style.left = (BLOCK_WIDTH * 7) + "px";
             document.getElementById("nextGame").onclick = function(){
@@ -1691,7 +1635,7 @@ function gameInitialize(texas){
     texas.nowInfo[4] = 0;
     texas.deck = new Array();
     texas.hands = new Array();
-    texas.bet = new Array();
+    texas.bets = new Array();
     texas.betActions = new Array();
 
     //デッキを作る
@@ -1701,7 +1645,7 @@ function gameInitialize(texas){
     shuffleDeck(texas.deck);
 
     //必要な情報のみ初期化
-    makeCharaData(texas.hands,texas.bet,texas.betActions,texas.nowInfo,texas.computerFace);
+    makeCharaData(texas.hands,texas.bets,texas.betActions,texas.nowInfo,texas.computerFace);
 
     //それぞれ必要なだけ手札を配る
     giveCard(texas.hands,texas.deck);
@@ -1726,7 +1670,7 @@ function texasInitialize(){
     this.players = new Array();    //プレイヤーの名前の配列
     this.hands = new Array();    //プレイヤーとプレイヤーごとの手札を入れる配列
     this.score = new Array();    //それぞれのポイントを入れる配列
-    this.bet = new Array();  //それぞれのベット額を入れる配列
+    this.bets = new Array();  //それぞれのベット額を入れる配列
     this.betActions = new Array();   //それぞれのベットアクションを入れる配列
     this.computerFace = new Array();    //コンピューターの顔グラを指定する配列
     var banker = 0; //親の位置を示す 0:com1,1:com2,2:com3,4:player
@@ -1744,7 +1688,7 @@ function texasInitialize(){
     shuffleDeck(this.deck);
 
     //各配列にキャラクター名を入れ、初期化
-    makeCharaData(this.hands,this.bet,this.betActions,this.nowInfo,this.computerFace,this.players,this.score,this.personalityType);
+    makeCharaData(this.hands,this.bets,this.betActions,this.nowInfo,this.computerFace,this.players,this.score,this.personalityType);
 
     //それぞれ必要なだけ手札を配る
     giveCard(this.hands,this.deck);
