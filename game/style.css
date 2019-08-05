@@ -1,0 +1,172 @@
+body{
+    margin : 0;
+}
+
+h2{
+    margin : 4px 0;
+}
+
+h3{
+    margin : 0;
+}
+
+.pokertext{
+    color: white;
+}
+
+.texastext{
+    color: white;
+}
+
+.category{
+    margin: 20px;
+}
+
+#indexbody{
+    background-color : rgb(154, 224, 42);
+}
+
+#pokerbody{
+    background-color: green;
+}
+
+#texasbody{
+    background-color: green;
+}
+
+#header{
+    padding : 1px;
+    height : 50px;
+    background-color : yellow;
+}
+
+#main{
+    padding : 30px;
+    text-align : center;
+}
+
+#poker{
+    padding : 1px;
+    text-align : center;
+    height : 600px;
+}
+
+.cards{
+    margin-bottom : 10px;
+    height : 172px;
+}
+
+div.card{
+    display : inline-block;
+    margin : 0 10px;
+    width : 108px;
+    height : 172px;
+}
+
+img.card{
+    display : inline-block;
+    margin : 0 10px;
+}
+
+.inputcard{
+    display : none;
+}
+
+label{
+    cursor : pointer;
+    width : 108px;
+    height : 172px;
+}
+
+label.label:hover{
+    opacity : 0.7;
+    filter: alpha(opacity=70);
+    -ms-filter: "alpha(opacity=70)";
+}
+
+.inputcard:checked + label.label{
+    margin : -4px;
+    border : 4px solid black;
+    border-radius : 2px;
+    box-sizing : border-box;
+}
+
+label:hover img{
+    opacity : 0.7;
+    filter: alpha(opacity=70);
+    -ms-filter: "alpha(opacity=70)";
+}
+
+.inputcard:checked + label img{
+    margin : -4px;
+    border : 4px solid black;
+    border-radius : 2px;
+    box-sizing : border-box;
+}
+
+.result{
+    padding : 1px;
+    margin : 0;
+    height : 50px;
+}
+
+.submit{
+    padding : 30px 0;
+    color: white;
+}
+
+#texas{
+    text-align : center;
+}
+
+#Computer1card{
+    text-align : center;
+}
+
+#Computer2card{
+    text-align : center;
+}
+
+#Computer3card{
+    text-align : center;
+}
+
+#Playercard{
+    text-align : center;
+}
+
+#Tablecard{
+    text-align : center;
+}
+
+#Bet{
+    cursor : pointer;
+}
+
+#Call{
+    cursor : pointer;
+}
+
+#Raise{
+    cursor : pointer;
+}
+
+#Fold{
+    cursor : pointer;
+}
+
+#nextSet{
+    color: white;
+}
+
+#nextSet:hover{
+    font-size: 1.2em;
+}
+
+#nextGame{
+    color: white;
+}
+
+#nextGame:hover{
+    font-size: 1.2em;
+}
