@@ -1543,7 +1543,7 @@ function resultDraw(texas){
     texas_id.textContent = null;
     for(var chara in texas.hands){
         if(chara == "Table"){
-            texas_id.insertAdjacentHTML("beforeend","<div id='" + chara + "field'><h3 class='texastext'>" + chara +"</h3></div>");
+            document.getElementById("Playerfield").insertAdjacentHTML("beforebegin","<div id='" + chara + "field'><h3 class='texastext'>" + chara +"</h3></div>");
         }else if(chara == "Player"){
             texas_id.insertAdjacentHTML("beforeend","<div id='" + chara + "field'><h3 class='texastext'>" + chara + " $" + texas.score[chara] + "</h3><h3 class='texastext'>Bet:$" + texas.bets[chara] + " " + result[chara][0] + "</h3></div>");
         }else{
